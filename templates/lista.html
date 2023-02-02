@@ -1,22 +1,46 @@
 {% extends "template.html" %}
 {% block conteudo %}
-        <table class="table table-striped table-responsive table-bordered">
-            <thead class="thead-default">
-                <tr>
-                    <th>Nome</th>
-                    <th>Categoria</th>
-                    <th>Console</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for jogo in jogos %}
-                <tr>
-                    <td>{{ jogo.nome }}</td>
-                    <td>{{ jogo.categoria }}</td>
-                    <td>{{ jogo.console }}</td>
-                </tr>
-                {% endfor %}
 
-            </tbody>
-        </table>
+<table class="table table-striped table-responsive table-bordered">
+    <thead class="thead-default">
+        <tr>
+            <th>Ordem</th>
+            <th>Demanda Atual</th>
+            <th>Demanda Nova</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for jogo in jogos %}
+        <tr>
+            <td>{{ jogo.ordem }}</td>
+            <td>{{ jogo.dem_out }}</td>
+            <td>{{ jogo.dem_in }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<br>
+
+<form action="{{ url_for('criar') }}" method="post">
+  <fieldset>
+    <div class="form-group">
+      <label for="ordem">Ordem</label>
+      <input type="text" id="ordem" name="ordem" class="form-control">
+    </div>
+    <div class="form-group">
+      <label for="dem_in">Demanda Nova</label>
+      <input type="text" id="dem_in" name="dem_in" class="form-control">
+    </div>
+     <br>
+    <button type="submit" class="btn btn-primary btn-salvar">Salvar</button>
+  </fieldset>
+</form>
+
+<br>
+
+<form action="{{ url_for('dispara_email') }}" method="post">
+    <button type="submit" class="btn btn-primary btn-salvar">Disparar Email</button>
+</form>
+
 {% endblock %}
