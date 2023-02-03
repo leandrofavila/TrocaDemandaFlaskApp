@@ -6,7 +6,7 @@ from email.message import Message
 from time import time
 
 
-class Jogo:
+class Troca_dem:
     def __init__(self, ordem, dem_out, dem_in):
         self.ordem = ordem
         self.dem_out = dem_out
@@ -49,9 +49,9 @@ def criar():
     ordem = request.form['ordem']
     dem_in = request.form['dem_in']
     dem_out = focco(ordem)
-    ordens = ordem.split('\n')
-    for j in ordens:
-        jogo = Jogo(j, dem_out['num_ordem'][0] + ' - ' + dem_out['desc_tecnica'][0], dem_in + ' - ' + dem_out['desc_dem_in'][0])
+    print(dem_out.to_string())
+    for j in dem_out.iterrows():
+        jogo = Troca_dem(j[1][0], j[1][1] + ' - ' + j[1][2], dem_in + ' - ' + j[1][3])
         lista.append(jogo)
     return redirect(url_for('index'))
 
@@ -88,20 +88,20 @@ def focco(ordem):
     connection = cx_Oracle.connect(user=r"focco_consulta", password=r'consulta3i08', dsn=dsn, encoding="UTF-8")
     cur = connection.cursor()
     ordem = ordem.split()
-    print(ordem)
     s = ','.join(ordem)
-    print(s)
     cur.execute(
-        r"SELECT TPL.COD_ITEM, TIT.DESC_TECNICA, (SELECT TIT.DESC_TECNICA FROM FOCCO3I.TITENS TIT WHERE TIT.COD_ITEM IN (" + request.form['dem_in'] + "))  "
+        r"SELECT DISTINCT TOR.NUM_ORDEM, TPL.COD_ITEM, TIT.DESC_TECNICA, (SELECT TIT.DESC_TECNICA FROM FOCCO3I.TITENS TIT WHERE TIT.COD_ITEM IN (" + request.form['dem_in'] + "))  "
         r"FROM FOCCO3I.TORDENS TOR "
         r"INNER JOIN FOCCO3I.TDEMANDAS TDE                    ON TOR.ID = TDE.ORDEM_ID "
         r"INNER JOIN FOCCO3I.TITENS_PLANEJAMENTO TPL          ON TDE.ITPL_ID = TPL.ID "
         r"INNER JOIN FOCCO3I.TITENS_EMPR EMP                  ON EMP.COD_ITEM = TPL.COD_ITEM "
         r"INNER JOIN FOCCO3I.TITENS TIT                       ON TIT.ID = EMP.ITEM_ID "
         r"WHERE TOR.NUM_ORDEM IN (" + s + ") "
+        r"AND TIT.DESC_TECNICA NOT LIKE '%TINTA%' "
     )
     dem_out_focco = cur.fetchall()
-    dem_out_focco = pd.DataFrame(dem_out_focco, columns=['num_ordem', 'desc_tecnica', 'desc_dem_in'])
+    dem_out_focco = pd.DataFrame(dem_out_focco, columns=['num_ordem', 'num_dem', 'desc_tecnica', 'desc_dem_in'])
+    #print(dem_out_focco.to_string())
     return dem_out_focco
 
 
@@ -122,7 +122,9 @@ def dispara_email():
 def trata_email():
     nlis = ''
     for x in lista:
-        nlis = nlis + x.ordem + ' ' + x.dem_in + ' ' + x.dem_out + '\n'
+        nlis = x.ordem + ' ' + x.dem_in + ' ' + x.dem_out + '\n'
+
+    #print(nlis)
 
     return nlis
 
