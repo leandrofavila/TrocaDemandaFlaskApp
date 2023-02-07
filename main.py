@@ -1,14 +1,16 @@
 from flask import Flask, render_template, request, redirect, session, flash, url_for
 import cx_Oracle
 import pandas as pd
-import imaplib
-from email.message import Message
-from time import time
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 class Troca_dem:
-    def __init__(self, ordem, dem_out, dem_in):
+    def __init__(self, ordem, cod_item, desc_item, dem_out, dem_in):
         self.ordem = ordem
+        self.cod_item = cod_item
+        self.desc_item = desc_item
         self.dem_out = dem_out
         self.dem_in = dem_in
 
@@ -19,13 +21,11 @@ class Usuario:
         self.nickname = nickname
         self.senha = senha
 
-
+lista_email = []
 lista = []
-
-
 usuario1 = Usuario('KBCA', 'kbca', 'alo')
 usuario2 = Usuario('pana', 'pana', '123')
-usuario3 = Usuario('pançudo', 'barriga', '123')
+usuario3 = Usuario('barriga', 'barriga', '123')
 
 usuarios = {usuario1.nickname: usuario1,
             usuario2.nickname: usuario2,
@@ -49,9 +49,9 @@ def criar():
     ordem = request.form['ordem']
     dem_in = request.form['dem_in']
     dem_out = focco(ordem)
-    print(dem_out.to_string())
+    #print(dem_out.to_string())
     for j in dem_out.iterrows():
-        jogo = Troca_dem(j[1][0], j[1][1] + ' - ' + j[1][2], dem_in + ' - ' + j[1][3])
+        jogo = Troca_dem(j[1][0], j[1][1], j[1][2], j[1][5] + ' - ' + j[1][4], dem_in + ' - ' + j[1][6])
         lista.append(jogo)
     return redirect(url_for('index'))
 
@@ -90,42 +90,70 @@ def focco(ordem):
     ordem = ordem.split()
     s = ','.join(ordem)
     cur.execute(
-        r"SELECT DISTINCT TOR.NUM_ORDEM, TPL.COD_ITEM, TIT.DESC_TECNICA, (SELECT TIT.DESC_TECNICA FROM FOCCO3I.TITENS TIT WHERE TIT.COD_ITEM IN (" + request.form['dem_in'] + "))  "
+        r"SELECT DISTINCT TOR.NUM_ORDEM, TIT2.COD_ITEM, TIT2.DESC_TECNICA, TPL.COD_ITEM, TIT.DESC_TECNICA "
         r"FROM FOCCO3I.TORDENS TOR "
         r"INNER JOIN FOCCO3I.TDEMANDAS TDE                    ON TOR.ID = TDE.ORDEM_ID "
         r"INNER JOIN FOCCO3I.TITENS_PLANEJAMENTO TPL          ON TDE.ITPL_ID = TPL.ID "
         r"INNER JOIN FOCCO3I.TITENS_EMPR EMP                  ON EMP.COD_ITEM = TPL.COD_ITEM "
         r"INNER JOIN FOCCO3I.TITENS TIT                       ON TIT.ID = EMP.ITEM_ID "
+        r"INNER JOIN FOCCO3I.TITENS_PLANEJAMENTO TPL2         ON TOR.ITPL_ID = TPL2.ID "
+        r"INNER JOIN FOCCO3I.TITENS_EMPR EMP2                 ON EMP2.COD_ITEM = TPL2.COD_ITEM "
+        r"INNER JOIN FOCCO3I.TITENS TIT2                      ON TIT2.ID = EMP2.ITEM_ID "
         r"WHERE TOR.NUM_ORDEM IN (" + s + ") "
         r"AND TIT.DESC_TECNICA NOT LIKE '%TINTA%' "
     )
     dem_out_focco = cur.fetchall()
-    dem_out_focco = pd.DataFrame(dem_out_focco, columns=['num_ordem', 'num_dem', 'desc_tecnica', 'desc_dem_in'])
-    #print(dem_out_focco.to_string())
+
+    connection.commit()
+    cur.execute(
+        r"SELECT TIT.COD_ITEM, TIT.DESC_TECNICA "
+        r"FROM FOCCO3I.TITENS TIT "
+        r"WHERE TIT.COD_ITEM IN (" + request.form['dem_in'] + ") "
+    )
+    dem_out_focco_dem_in = cur.fetchall()
+    dem_out_focco_dem_in = pd.DataFrame(dem_out_focco_dem_in, columns=['dem_in', 'desc_dem_in'])
+
+    dem_out_focco = pd.DataFrame(dem_out_focco, columns=['num_ordem',
+                                                         'cod_item',
+                                                         'desc_ordem',
+                                                         'num_dem',
+                                                         'desc_tecnica'
+                                                         ])
+    dem_out_focco['dem_in'] = dem_out_focco_dem_in['dem_in'][0]
+    dem_out_focco['desc_dem_in'] = dem_out_focco_dem_in['desc_dem_in'][0]
     return dem_out_focco
 
 
 @app.route('/dispara_email', methods=['POST', ])
 def dispara_email():
-    connection = imaplib.IMAP4_SSL('10.40.3.12', 993)
-    connection.login("ldeavila@sr.ind.br", "srengld21v3l1")
-    new_message = Message()
-    new_message["From"] = "leandrofavila@gmail.com"
-    new_message["Subject"] = "Troca de demanda."
-    new_message.set_payload(trata_email())
-    connection.append('INBOX', '', imaplib.Time2Internaldate(time()), str(new_message).encode('utf-8'))
+    msg = MIMEMultipart()
+    message = trata_email()
+    password = "srengld21v3l1"
+    msg['From'] = "ldeavila@sr.ind.br"
+    recipients = ["ldeavila@sr.ind.br"] #"producao@sr.ind.br", "wesley@sr.ind.br"
+    msg['To'] = ", ".join(recipients)
+    msg['Subject'] = "Troca de Demanda"
+    msg.attach(MIMEText(message, 'plain'))
+    server = smtplib.SMTP('10.40.3.12: 465')
+    server.starttls()
+    server.login(msg['From'], password)
+    server.sendmail(msg['From'], recipients, msg.as_string())
+    server.quit()
     flash('Ordens enviadas para supervisor da produção')
     lista.clear()
     return redirect(url_for('index'))
 
 
 def trata_email():
-    nlis = ''
-    for x in lista:
-        nlis = x.ordem + ' ' + x.dem_in + ' ' + x.dem_out + '\n'
-
-    #print(nlis)
-
+    df = pd.DataFrame([vars(d) for d in lista])
+    print(df.to_string())
+    df_group = df.groupby('dem_in')
+    nlis = 'Boa tarde: \nFavor trocar as demandas das ordens relacionadas abaixo:\n \n'
+    for dem, group in df_group:
+        print(dem)
+        print(group.to_string())
+        print()
+        nlis = nlis + 'Sai' + str(dem) + 'entra' + str(group['dem_out']) + '\n' + '\n' + str(group['ordem']) + str(group['cod_item']) + str(group['desc_item']) + '\n'
     return nlis
 
 
