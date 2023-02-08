@@ -21,6 +21,7 @@ class Usuario:
         self.nickname = nickname
         self.senha = senha
 
+
 lista_email = []
 lista = []
 usuario1 = Usuario('KBCA', 'kbca', 'alo')
@@ -51,7 +52,7 @@ def criar():
     dem_out = focco(ordem)
     #print(dem_out.to_string())
     for j in dem_out.iterrows():
-        jogo = Troca_dem(j[1][0], j[1][1], j[1][2], j[1][5] + ' - ' + j[1][4], dem_in + ' - ' + j[1][6])
+        jogo = Troca_dem(j[1][0], j[1][1], j[1][2], j[1][3] + ' - ' + j[1][4], dem_in + ' - ' + j[1][6])
         lista.append(jogo)
     return redirect(url_for('index'))
 
@@ -100,7 +101,7 @@ def focco(ordem):
         r"INNER JOIN FOCCO3I.TITENS_EMPR EMP2                 ON EMP2.COD_ITEM = TPL2.COD_ITEM "
         r"INNER JOIN FOCCO3I.TITENS TIT2                      ON TIT2.ID = EMP2.ITEM_ID "
         r"WHERE TOR.NUM_ORDEM IN (" + s + ") "
-        r"AND TIT.DESC_TECNICA NOT LIKE '%TINTA%' "
+                                          r"AND TIT.DESC_TECNICA NOT LIKE '%TINTA%' "
     )
     dem_out_focco = cur.fetchall()
 
@@ -130,7 +131,7 @@ def dispara_email():
     message = trata_email()
     password = "srengld21v3l1"
     msg['From'] = "ldeavila@sr.ind.br"
-    recipients = ["ldeavila@sr.ind.br"] #"producao@sr.ind.br", "wesley@sr.ind.br"
+    recipients = ["ldeavila@sr.ind.br"]  # "producao@sr.ind.br", "wesley@sr.ind.br"
     msg['To'] = ", ".join(recipients)
     msg['Subject'] = "Troca de Demanda"
     msg.attach(MIMEText(message, 'plain'))
@@ -146,14 +147,17 @@ def dispara_email():
 
 def trata_email():
     df = pd.DataFrame([vars(d) for d in lista])
-    print(df.to_string())
-    df_group = df.groupby('dem_in')
+    #print(df.to_string())
+    df_uniq = df['dem_in'].unique()
     nlis = 'Boa tarde: \nFavor trocar as demandas das ordens relacionadas abaixo:\n \n'
-    for dem, group in df_group:
-        print(dem)
-        print(group.to_string())
-        print()
-        nlis = nlis + 'Sai' + str(dem) + 'entra' + str(group['dem_out']) + '\n' + '\n' + str(group['ordem']) + str(group['cod_item']) + str(group['desc_item']) + '\n'
+    for x in df_uniq:
+        nlis += 'Sai a demanda: ' + '' + '\n'\
+               + 'Entra a demanda: ' + x + '\n'
+        for idx, vals in df.iterrows():
+            if vals['dem_in'] == x:
+                nlis += '\t' + '•' + str(vals['ordem']) + ' - ' + str(vals['cod_item']) + ' - ' + str(vals['desc_item']) + ' - ' + '\n'
+
+        nlis += '\n \n ____________________________________________________________________________________ \n \n'
     return nlis
 
 
