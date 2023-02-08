@@ -3007,10 +3007,14 @@ textarea.form-control-lg {
   opacity: 0.65;
 }
 
+
 .btn-primary {
   color: #fff;
   background-color: #0d6efd;
   border-color: #0d6efd;
+
+
+
 }
 .btn-primary:hover {
   color: #fff;
@@ -3891,7 +3895,7 @@ textarea.form-control-lg {
   align-items: flex-start;
   justify-content: center;
 }
-.btn-group-vertical > .btn,
+.btn-group-vertical > .btn,,
 .btn-group-vertical > .btn-group {
   width: 100%;
 }

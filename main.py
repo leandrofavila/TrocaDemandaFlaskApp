@@ -4,6 +4,7 @@ import pandas as pd
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import datetime
 
 
 class Troca_dem:
@@ -149,16 +150,27 @@ def trata_email():
     df = pd.DataFrame([vars(d) for d in lista])
     #print(df.to_string())
     df_uniq = df['dem_in'].unique()
-    nlis = 'Boa tarde: \nFavor trocar as demandas das ordens relacionadas abaixo:\n \n'
+    nlis = sauda() + '\nFavor trocar as demandas das ordens relacionadas abaixo:\n \n'
     for x in df_uniq:
-        nlis += 'Sai a demanda: ' + '' + '\n'\
+        condi = df.loc[df['dem_in'] == x, 'dem_out'].iloc[0]
+        #print(condi)
+        nlis += 'Sai a demanda: ' + condi + '\n'\
                + 'Entra a demanda: ' + x + '\n'
         for idx, vals in df.iterrows():
             if vals['dem_in'] == x:
-                nlis += '\t' + '•' + str(vals['ordem']) + ' - ' + str(vals['cod_item']) + ' - ' + str(vals['desc_item']) + ' - ' + '\n'
-
+                nlis += '\t' + '•' + str(vals['ordem']) + ' - ' + str(vals['cod_item']) + ' - ' + str(vals['desc_item']) + '\n'
         nlis += '\n \n ____________________________________________________________________________________ \n \n'
     return nlis
+
+
+def sauda():
+    currentTime = datetime.datetime.now()
+    if currentTime.hour < 12:
+        return 'Bom dia: '
+    elif 12 <= currentTime.hour <= 18:
+        return 'Boa tarde: '
+    else:
+        return 'Boa noite: '
 
 
 if __name__ == '__main__':
