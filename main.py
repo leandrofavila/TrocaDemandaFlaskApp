@@ -107,7 +107,7 @@ def focco(ordem):
         r"INNER JOIN FOCCO3I.TITENS_EMPR EMP2                 ON EMP2.COD_ITEM = TPL2.COD_ITEM "
         r"INNER JOIN FOCCO3I.TITENS TIT2                      ON TIT2.ID = EMP2.ITEM_ID "
         r"WHERE TOR.NUM_ORDEM IN (" + s + ") "
-                                          r"AND TIT.DESC_TECNICA NOT LIKE '%TINTA%' "
+        r"AND TIT.DESC_TECNICA NOT LIKE '%TINTA%' "
     )
     dem_out_focco = cur.fetchall()
     connection.commit()
@@ -137,14 +137,18 @@ def dispara_email():
     message = trata_email()
     password = "srengld21v3l1"
     msg['From'] = "ldeavila@sr.ind.br"
-    recipients = [
-        "ldeavila@sr.ind.br", "producao@sr.ind.br", "qualidade@sr.ind.br"]  # "producao@sr.ind.br", "wesley@sr.ind.br"
+    recipients = ["ldeavila@sr.ind.br", "producao@sr.ind.br", "qualidade@sr.ind.br"]  # "producao@sr.ind.br", "wesley@sr.ind.br"
     msg['To'] = ", ".join(recipients)
     msg['Subject'] = "Troca de Demanda"
     msg.attach(MIMEText(message, 'plain'))
     server = smtplib.SMTP('10.40.3.12: 465')
     server.starttls()
-    server.login(msg['From'], password)
+    try:
+        server.login(msg['From'], password)
+    except IndentationError as err:
+        print(f'Senha fora alterada - {err}')
+
+
     server.sendmail(msg['From'], recipients, msg.as_string())
     server.quit()
     flash('Ordens enviadas para o(a) supervisor(a) avaliar')
