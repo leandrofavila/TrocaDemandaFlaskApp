@@ -32,11 +32,13 @@ usuario1 = Usuario('KBCA', 'kbca', 'alo')
 usuario2 = Usuario('pana', 'pana', '123')
 usuario3 = Usuario('barriga', 'barriga', '123')
 usuario4 = Usuario('amanda', 'amanda', 'qualidade01')
+usuario5 = Usuario('luciano', 'luciano', 'qualidade02')
 
 usuarios = {usuario1.nickname: usuario1,
             usuario2.nickname: usuario2,
             usuario3.nickname: usuario3,
-            usuario4.nickname: usuario4
+            usuario4.nickname: usuario4,
+            usuario5.nickname: usuario5
             }
 
 app = Flask(__name__)
@@ -137,7 +139,7 @@ def dispara_email():
     message = trata_email()
     password = "srengld21v3l1"
     msg['From'] = "ldeavila@sr.ind.br"
-    recipients = ["ldeavila@sr.ind.br", "producao@sr.ind.br", "qualidade@sr.ind.br"]  # "producao@sr.ind.br", "wesley@sr.ind.br"
+    recipients = ["ldeavila@sr.ind.br", "producao@sr.ind.br", "qualidade@sr.ind.br", "luciano@sr.ind.br"]  # "producao@sr.ind.br", "wesley@sr.ind.br"
     msg['To'] = ", ".join(recipients)
     msg['Subject'] = "Troca de Demanda"
     msg.attach(MIMEText(message, 'plain'))
