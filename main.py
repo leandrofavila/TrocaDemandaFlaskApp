@@ -139,7 +139,8 @@ def dispara_email():
     message = trata_email()
     password = "srengld21v3l1"
     msg['From'] = "ldeavila@sr.ind.br"
-    recipients = ["ldeavila@sr.ind.br", "producao@sr.ind.br", "qualidade@sr.ind.br", "luciano@sr.ind.br"]  # "producao@sr.ind.br", "wesley@sr.ind.br"
+    recipients = ["ldeavila@sr.ind.br", "producao@sr.ind.br", "qualidade@sr.ind.br", "qualidade02@sr.ind.br",
+                  "luciano@sr.ind.br", "wesley@sr.ind.br"]
     msg['To'] = ", ".join(recipients)
     msg['Subject'] = "Troca de Demanda"
     msg.attach(MIMEText(message, 'plain'))
